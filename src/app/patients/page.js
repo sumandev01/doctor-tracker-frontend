@@ -107,7 +107,11 @@ export default function PatientsPage() {
 
   // Open Edit Modal
   function handleOpenEdit(patient) {
-    setEditingPatient({ ...patient });
+    const currentDocId = patient.doctorId?._id || patient.doctorId || '';
+    setEditingPatient({
+      ...patient,
+      doctorId: currentDocId,
+    });
     setIsEditModalOpen(true);
   }
 
@@ -115,10 +119,24 @@ export default function PatientsPage() {
   async function handleSaveEdit(e) {
     e.preventDefault();
     if (!editingPatient) return;
-    await dataService.updatePatient(editingPatient._id, editingPatient);
-    setIsEditModalOpen(false);
-    setEditingPatient(null);
-    fetchPatients();
+    try {
+      const payload = {
+        name: editingPatient.name,
+        age: Number(editingPatient.age),
+        gender: editingPatient.gender,
+        phone: editingPatient.phone,
+        condition: editingPatient.condition,
+        doctorId: editingPatient.doctorId?._id || editingPatient.doctorId,
+        notes: editingPatient.notes || '',
+      };
+      await dataService.updatePatient(editingPatient._id, payload);
+      setIsEditModalOpen(false);
+      setEditingPatient(null);
+      await fetchPatients();
+    } catch (err) {
+      console.error('Failed to update patient:', err);
+      alert(err.message || 'Failed to update patient record');
+    }
   }
 
   // Confirm Delete
